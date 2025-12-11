@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    private UserDatabaseHelper dbHelper;
+    private SQLiteConnector db;
     private SessionManager session;
 
     @Override
@@ -19,6 +19,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         session = new SessionManager(this);
+
         if (session.isLoggedIn()) {
             startActivity(new Intent(this, HomeActivity.class));
             finish();
@@ -27,36 +28,39 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        dbHelper = new UserDatabaseHelper(this);
+        db = new SQLiteConnector(this);
 
         EditText edtUser = findViewById(R.id.edtUsername);
         EditText edtPass = findViewById(R.id.edtPassword);
         Button btnLogin = findViewById(R.id.btnLogin);
-        TextView tvRegister = findViewById(R.id.tvGoRegister);
+        TextView tvRegister = findViewById(R.id.tvGoRegister);   // <-- thêm dòng này
 
+        // ========== NÚT ĐĂNG KÝ ==========
+        tvRegister.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, RegisterActivity.class);
+            startActivity(intent);
+        });
+
+        // ========== NÚT LOGIN ==========
         btnLogin.setOnClickListener(v -> {
+
             String username = edtUser.getText().toString().trim();
             String password = edtPass.getText().toString().trim();
 
             if (username.isEmpty() || password.isEmpty()) {
-                Toast.makeText(MainActivity.this, "Vui lòng nhập đủ thông tin", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            boolean ok = dbHelper.checkLogin(username, password);
+            boolean ok = db.checkUser(username, password);
 
             if (ok) {
                 session.setLoggedIn(username);
-                Toast.makeText(MainActivity.this, "Đăng nhập thành công", Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(MainActivity.this, HomeActivity.class));
                 finish();
             } else {
-                Toast.makeText(MainActivity.this, "Sai tài khoản hoặc mật khẩu", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Sai username hoặc mật khẩu", Toast.LENGTH_SHORT).show();
             }
         });
-
-        tvRegister.setOnClickListener(v ->
-                startActivity(new Intent(MainActivity.this, RegisterActivity.class))
-        );
     }
 }

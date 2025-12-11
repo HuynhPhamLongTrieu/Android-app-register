@@ -10,12 +10,14 @@ import androidx.appcompat.app.AppCompatActivity;
 public class HomeActivity extends AppCompatActivity {
 
     private SessionManager session;
+    private SQLiteConnector db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         session = new SessionManager(this);
+        db = new SQLiteConnector(this);
 
         if (!session.isLoggedIn()) {
             startActivity(new Intent(this, MainActivity.class));
@@ -29,14 +31,17 @@ public class HomeActivity extends AppCompatActivity {
         Button btnLogout = findViewById(R.id.btnLogout);
 
         String username = session.getUsername();
-        if (username == null) {
-            username = "User";
+        String email = db.getEmail(username);   // dùng hàm mới được sửa
+
+        if (email == null) {
+            email = "(Không tìm thấy email)";
         }
-        tvWelcome.setText("Xin chào, " + username);
+
+        tvWelcome.setText("Xin chào " + username + "\nEmail: " + email);
 
         btnLogout.setOnClickListener(v -> {
             session.logout();
-            startActivity(new Intent(HomeActivity.this, MainActivity.class));
+            startActivity(new Intent(this, MainActivity.class));
             finish();
         });
     }

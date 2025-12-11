@@ -7,41 +7,54 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.myapplication.model.User;
+
 public class RegisterActivity extends AppCompatActivity {
 
-    private UserDatabaseHelper dbHelper;
+    private SQLiteConnector db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        dbHelper = new UserDatabaseHelper(this);
+        db = new SQLiteConnector(this);
 
         EditText edtUser = findViewById(R.id.edtUsername);
+        EditText edtEmail = findViewById(R.id.edtEmail);
         EditText edtPass = findViewById(R.id.edtPassword);
-        EditText edtEmail = findViewById(R.id.edtEmail);   // <--- THÊM VÀO
         Button btnRegister = findViewById(R.id.btnRegister);
 
         btnRegister.setOnClickListener(v -> {
 
             String username = edtUser.getText().toString().trim();
+            String email = edtEmail.getText().toString().trim();
             String password = edtPass.getText().toString().trim();
-            String email = edtEmail.getText().toString().trim();  // <--- LẤY EMAIL
 
-            if (username.isEmpty() || password.isEmpty() || email.isEmpty()) {
-                Toast.makeText(RegisterActivity.this, "Vui lòng nhập đủ thông tin", Toast.LENGTH_SHORT).show();
+            if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Vui lòng nhập đủ thông tin", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            boolean success = dbHelper.registerUser(username, password, email); // <--- GỌI HÀM MỚI
-
-            if (success) {
-                Toast.makeText(RegisterActivity.this, "Đăng ký thành công", Toast.LENGTH_SHORT).show();
-                finish();
-            } else {
-                Toast.makeText(RegisterActivity.this, "Username hoặc Email đã tồn tại", Toast.LENGTH_SHORT).show();
+            // Check email tồn tại
+            if (db.checkUser(email)) {
+                Toast.makeText(this, "Email đã tồn tại!", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            // Hash password
+            String hashedPassword = HashUtil.sha256(password);
+
+            // Tạo user mới
+            User user = new User();
+            user.setName(username);
+            user.setEmail(email);
+            user.setPassword(hashedPassword);
+
+            db.addUser(user);
+
+            Toast.makeText(this, "Đăng ký thành công", Toast.LENGTH_SHORT).show();
+            finish();
         });
     }
 }
